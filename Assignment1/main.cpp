@@ -168,9 +168,9 @@ extern std::list<Segment *> randomizeList(std::list<Segment *> l);
 
 
 namespace utilvars{
-	extern int graphn, graphw;
-	extern Channel * routing;
-	extern std::map<pin, enum color_types> colormap;
+	int graphn, graphw;
+	Channel * routing;
+	std::map<pin, enum color_types> colormap;
 }
 
 void printConnList(std::list<Connection> connlist){
@@ -204,7 +204,7 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 		return -1;
 	}
 	//cout << "n=" << temp << endl;
-	//utilvars::graphn = *n;
+	utilvars::graphn = *n;
 
 	//get the value for w
 	std::getline(fs, temp);
@@ -218,7 +218,7 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 		return -1;
 	}
 	//cout << "w=" << temp << endl;
-	//utilvars::graphw = *w;
+	utilvars::graphw = *w;
 
 	std::getline(fs, temp);
 	while (!fs.eof()){

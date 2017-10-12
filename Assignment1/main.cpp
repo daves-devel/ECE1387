@@ -277,7 +277,6 @@ std::list<Segment *> randomizeList(std::list<Segment *> l){
 Channel::Channel(int n, int w){
 	N = n;
 	W = w;
-//	mode = BIDIR;
 	tryHard=false;
 
 	horiz = new Segment**[N];
@@ -677,7 +676,6 @@ Segment* Channel::segmentAt(wire w){
 
 void Channel::traceback(Segment * dest){
 	pin src = dest->getSource();
-	//int len = t->getLength();
 	char hv = std::get<0>(dest->getIndex());
 	int x = std::get<1>(dest->getIndex());
 	int y = std::get<2>(dest->getIndex());

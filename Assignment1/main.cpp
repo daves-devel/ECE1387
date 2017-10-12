@@ -131,7 +131,6 @@ bool Connection::operator==(const Connection& c){
 
 }
 bool Connection::isEOPL(){
-	//return (this == &EOPL);
 	return (x1 == EOPL.x1 && y1 == EOPL.y1 && p1 == EOPL.p1 && x2 == EOPL.x2 && y2 == EOPL.y2&& p2 == EOPL.p2);
 }
 
@@ -149,7 +148,6 @@ private:
 	int N;
 	int W;
 	bool tryHard;
-//	enum CHANNELMODE mode;
 public:
 	Channel(int n, int w);
 	~Channel();
@@ -232,7 +230,7 @@ enum checkReturn Segment::checkAndSet(Segment * src){
 	if (state == TARGET){
 		length = src->getLength() + 1;
 		sourcepin = src->getSource();
-		state = USED;	//????
+		state = USED;	
 		return ISTARGET;
 	}
 	if (state == UNUSED){
@@ -368,25 +366,6 @@ void Channel::clearAttempt(){
 
 bool Channel::findSetAvailableNeighbours(wire t, std::list<wire> * neigh){
 	neigh->clear(); 
-	/*int x = std::get<1>(t);
-	int y = std::get<2>(t);
-	int w = std::get<3>(t);
-	pin p = horiz[x][y][w].getSource();
-	Segment * seg;
-	if (std::get<0>(t) = 'h'){
-		seg = &horiz[x][y][w];
-		if (x>0 && horiz[x - 1][y][w].isTarget()){
-			horiz[x - 1][y][w].setLength(seg->getLength() + 1);
-			return true;
-		}
-	//		|| horiz[x - 1][y][w].isUnused() || horiz[x - 1][y][w].usesSameSource(p))){
-			//mark
-		//}
-	}
-	else {
-		seg = &vert[x][y][w];
-
-	}*/
 	return false;
 }
 
@@ -399,8 +378,6 @@ bool Channel::findSetAvailableNeighbours(wire t, std::list<wire> * neigh){
  */
 Segment * Channel::findSetAvailableNeighbours(Segment * t, std::list<Segment *> * neigh){
 	neigh->clear();
-//	pin src = t->getSource();
-	//int len = t->getLength();
 	char hv = std::get<0>(t->getIndex());
 	int x = std::get<1>(t->getIndex());
 	int y = std::get<2>(t->getIndex());
@@ -1005,7 +982,6 @@ void drawSwitchConnections(bool isHoriz, int x, int y, int w){
 	if (!seg->isUsed()) return;
 	
 	pin src = seg->getSource();
-	bool bp = (src == std::make_tuple(0, 2, 4));
 	int subsq = 2 * utilvars::graphw + 1;
 	setcolor(utilvars::colormap[src]);
 
@@ -1120,8 +1096,6 @@ void drawPinToWire(pin p, int w, enum color_types c){
 	int o = std::get<2>(p);
 	int subsq = 2 * utilvars::graphw + 1;
 
-	//fillrect((2 * i + 1)*subsq, (2 * j + 1)*subsq, 2 * (i + 1)*subsq - 1, 2 * (j + 1)*subsq - 1);
-	
 	switch (o){
 	case 1:
 		drawline((2 * x + 1)*subsq + 1, (2 * y + 1)*subsq, (2 * x + 1)*subsq + 1, subsq*y * 2 + 2 * w + 1);
@@ -1139,7 +1113,6 @@ void drawPinToWire(pin p, int w, enum color_types c){
 }
 
 void drawscreen(){
-	//extern int chipn, chipw;
 	set_draw_mode(DRAW_NORMAL);
 	clearscreen();
 
@@ -1155,8 +1128,6 @@ void drawscreen(){
 			for (int k = 0; k < utilvars::graphw; k++){
 				//Draw the wires
 				setcolor(LIGHTGREY);
-				//drawline(subsq*j * 2 + 2 * k + 1, (i + 1) * 2 * subsq - 1, subsq*j * 2 + 2 * k + 1, (2 * i + 1)*subsq);
-				//drawline( (i + 1) * 2 * subsq - 1,subsq*j * 2 + 2 * k + 1, (2 * i + 1)*subsq, subsq*j * 2 + 2 * k + 1);
 				drawWireSegment(true, i, j, k, LIGHTGREY);
 				drawWireSegment(false, j, i, k, LIGHTGREY);
 			}
@@ -1167,7 +1138,6 @@ void drawscreen(){
 			fillrect((2 * i + 1)*subsq, (2 * j + 1)*subsq, 2 *(i+1)*subsq - 1, 2 *(j+1)*subsq - 1);
 			for (int k = 1; k < 5; k++){
 				pin p = std::make_tuple(i, j, k);
-				bool ok = p == std::make_tuple(0, 2, 4);
 				for (int w = 0; w < utilvars::graphw; w++){
 					if (utilvars::routing->segmentAt(p, w)->getSource() == p)
 						drawPinToWire(p, w, utilvars::colormap[utilvars::routing->segmentAt(p, w)->getSource()]);
@@ -1202,7 +1172,6 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 		cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl;
 		return -1;
 	}
-	//cout << "n=" << temp << endl;
 	utilvars::graphn = *n;
 
 	//get the value for w
@@ -1216,12 +1185,10 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 		cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl;
 		return -1;
 	}
-	//cout << "w=" << temp << endl;
 	utilvars::graphw = *w;
 
 	std::getline(fs, temp);
 	while (!fs.eof()){
-	//	cout << "'" << temp << "'" << endl;
 		for (int i = 0; i < 6; i++){
 			try{ item[i] = std::stoi(temp, &idx); }
 			catch (const std::invalid_argument& ia) {
@@ -1237,7 +1204,6 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 	}
 
 	fs.close();
-	//connlist.unique(&Connection::operator==);
 	
 	return 0;
 }
@@ -1253,25 +1219,17 @@ int main(int argc , char ** argv){
 		return -1;
 	}
 
-    //Parse the inputfile
-
 	if (parseInputFile(argv[1], &chipn, &chipw, &connlist) != 0) return -1;
 	
     printConnList(connlist);
 
-
-	//Implement Lee Maze router
-
-	//Display the route
-    	init_graphics("Maze Routing", WHITE);
-	//set_visible_world(utilvars::initial_coords);
-	init_world(0, 0, (chipw * 2 + 1)*(2 * chipn + 1), (chipw * 2 + 1)*(2 * chipn + 1));
+    init_graphics("Assignment1", WHITE);
+	init_world(0, (chipw * 2 + 1)*(2 * chipn + 1), (chipw * 2 + 1)*(2 * chipn + 1), 0);
 	std::list<Connection>::iterator iter = connlist.begin();
 	utilvars::routing = new Channel(chipn, chipw);
 
 	int cindex = YELLOW + 1;
 	for (iter; iter != connlist.end(); iter++){
-		//sourcelist.push_back(iter->src());
 		utilvars::colormap.emplace(iter->src(), (color_types)cindex);
 		cindex++;
 		if (cindex%NUM_COLOR==0) cindex = YELLOW + 1;
@@ -1286,14 +1244,11 @@ int main(int argc , char ** argv){
 		cout << "Attempting Route: ";
 		iter->print();
 
-		//bool bar = utilvars::routing->route(iter->src(), iter->dest());
 
 		if (!utilvars::routing->route(iter->src(), iter->dest())){
 			attempts++;
 			if (attempts >= MAXATTEMPTS/2) utilvars::routing->tryHarder(true);
 			string message = "Resetting routing - Attempt #" + std::to_string(attempts + 1) + "...";
-			//update_message(message);
-			//event_loop(NULL, NULL, NULL, drawscreen);
 			popToFront(&connlist, iter);
 			iter = connlist.begin();
 			utilvars::routing->resetRouting();

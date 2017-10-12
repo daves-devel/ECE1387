@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <pthread.h>
 
 
 #include "graphics.h"
@@ -19,6 +20,7 @@ using std::endl;
 #define MAXSEGLENGTH 8191
 #define MAXATTEMPTS 100
 #define DRAWEACHROUTE 0
+#define NUM_THREADS 2
 
 
 
@@ -37,6 +39,15 @@ enum checkReturn{
 	ISTARGET,
 	ISUSED
 };
+
+enum SWITCH_BLOCK_MODE{
+	CROSSBAR,
+	WILTON
+};
+
+#ifndef SWBMODE
+#define SWBMODE CROSSBAR
+#endif
 
 class Segment{
 private:
@@ -382,7 +393,7 @@ Segment * Channel::findSetAvailableNeighbours(Segment * t, std::list<Segment *> 
 	int y = std::get<2>(t->getIndex());
 	int w = std::get<3>(t->getIndex());
 	enum checkReturn csStatus;
-	//if (MODE == BIDIR){
+	if (SWBMODE == CROSSBAR){
 		if (hv == 'h'){
 			if (x > 0){ // horiz left
 				csStatus = segmentAt('h', x - 1, y, w)->checkAndSet(t); 
@@ -469,8 +480,8 @@ Segment * Channel::findSetAvailableNeighbours(Segment * t, std::list<Segment *> 
 					neigh->push_back(segmentAt('h', x, y+1, w)); //Segment marked, add to list
 			}
 		}
-	//}
-	/*else{
+	}
+	else{
 		if (hv == 'h'){
 			if (w % 2 == 0){ // W->E --->
 				if (x < (N - 1)){
@@ -570,7 +581,7 @@ Segment * Channel::findSetAvailableNeighbours(Segment * t, std::list<Segment *> 
 
 		}
 
-	}*/
+	}
 	return nullptr;
 }
 
@@ -683,7 +694,7 @@ void Channel::traceback(Segment * dest){
 	int l = dest->getLength();
 	if (l == 0) return;
 
-	//if (MODE == BIDIR){
+	if (SWBMODE == CROSSBAR){
 		if (hv == 'h'){
 		//First pass - look for already used segments
 			if (x > 0 && segmentAt('h', x - 1, y, w)->getLength() == l - 1 
@@ -800,9 +811,9 @@ void Channel::traceback(Segment * dest){
 				traceback(segmentAt('h', x, y + 1, w));
 			}
 		}
-	//}
-	/*else{
-		//The unidirectional case!
+	}
+	else{
+		//The Wilton case!
 		if (hv == 'h'){
 			if (w % 2 == 1){ // W->E --->
 				//First Pass - try to reuse
@@ -928,7 +939,7 @@ void Channel::traceback(Segment * dest){
 			}
 
 		}
-	}*/
+	}
 	return;
 }
 
@@ -983,8 +994,7 @@ void drawSwitchConnections(bool isHoriz, int x, int y, int w){
 	int subsq = 2 * utilvars::graphw + 1;
 	setcolor(utilvars::colormap[src]);
 
-	//if (MODE == BIDIR){
-    //If Cross connection
+	if (SWBMODE == CROSSBAR){
 		if (isHoriz){
 			//left side
 			if (x > 0 && utilvars::routing->segmentAt('h', x - 1, y, w)->getSource() == src && utilvars::routing->segmentAt('h', x - 1, y, w)->isUsed()){
@@ -1013,9 +1023,9 @@ void drawSwitchConnections(bool isHoriz, int x, int y, int w){
 				drawline(subsq*x * 2 + 2 * w + 1, (2 * y + 1)*subsq, subsq*x * 2 + 2 * w + 1, (y)* 2 * subsq - 1);
 		}
 
-	//}
-    //else Wilton
-	/*else{
+	}
+	else{
+        //Wilton Case
 		if (isHoriz){
 			if (w % 2 == 0){ // W->E --->
 				if (x < (utilvars::graphn - 1) && utilvars::routing->segmentAt('h', x + 1, y, w)->getSource() == src && utilvars::routing->segmentAt('h', x + 1, y, w)->isUsed()){
@@ -1064,7 +1074,7 @@ void drawSwitchConnections(bool isHoriz, int x, int y, int w){
 				}
 			}
 		}
-	}*/
+	}
 }
 
 void drawWireSegment(bool isHoriz, int x, int y, int w, enum color_types c){
@@ -1211,6 +1221,8 @@ int main(int argc , char ** argv){
 	int chipn, chipw;
 	int attempts = 0;
 	std::list<Connection> connlist;
+    pthread_t threads[NUM_THREADS];
+    int rc, thread_index;
 
 	if (argc < 2) {
 		cerr << "Error: Missing filename! Use " << argv[0] << " <filename>" << std::endl;
@@ -1262,7 +1274,7 @@ int main(int argc , char ** argv){
 		update_message(message.c_str());
 	}
 	else	update_message("Done!");
-	//cout << "Using mode " << ((MODE==BIDIR) ? "Bidir" : "Unidir") << endl;
+	cout << "Using switch block mode " << ((SWBMODE==CROSSBAR) ? "Crossbar" : "Wilton") << endl;
 	cout << "Used " << utilvars::routing->routingSegmentsUsed() << " wire segments." << endl;
 	cout << "Widest channel used: " << utilvars::routing->maxW() << endl;
 	event_loop(NULL, NULL, NULL, drawscreen);

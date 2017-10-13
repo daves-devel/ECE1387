@@ -10,6 +10,8 @@
 #include <pthread.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
+
 
 
 #include "graphics.h"
@@ -22,12 +24,15 @@ using std::endl;
 #define MAXSEGLENGTH 8191
 #define MAXATTEMPTS 100
 #define DRAWEACHROUTE 0
-#define NUM_THREADS 2
+#define NUM_THREADS 1
 
 
 
 typedef std::tuple<int, int, int> pin;
 typedef std::tuple<char, int, int, int> wire;
+
+int attempts = 0;
+
 
 enum segment_state{
 	UNUSED,
@@ -1230,17 +1235,53 @@ int parseInputFile(char * fname, int * n, int * w, std::list<Connection> * connl
 	return 0;
 }
 
+std::list<Connection> connlist;
+std::list<Connection>::iterator iter;
+
+struct thread_data {
+   int  thread_id;
+};
+
+void *routingThread(void *threadarg) {
+   struct thread_data *my_data;
+   my_data = (struct thread_data *) threadarg;
+   while (iter != connlist.end() && attempts<MAXATTEMPTS){
+		if (DRAWEACHROUTE)
+			event_loop(NULL, NULL, NULL, drawscreen);
+
+		cout << "Attempting Route: ";
+		iter->print();
+
+        if (!utilvars::routing->route(iter->src(), iter->dest())){
+            attempts++;
+            if (attempts >= MAXATTEMPTS/2) utilvars::routing->tryHarder(true);
+            string message = "Resetting routing - Attempt #" + std::to_string(attempts + 1) + "...";
+            popToFront(&connlist, iter);
+            iter = connlist.begin();
+            utilvars::routing->resetRouting();
+        }
+        else{
+            utilvars::routing->clearAttempt();
+            iter++;
+            update_message("...");
+        }
+  }
+   cout << "Thread ID : " << my_data->thread_id ;
+
+   pthread_exit(NULL);
+}
+
 int main(int argc , char ** argv){
 
 	int chipn, chipw;
-	int attempts = 0;
-	std::list<Connection> connlist;
+	//int attempts = 0;
+	//std::list<Connection> connlist;
     pthread_t threads[NUM_THREADS];
+    pthread_attr_t attr;
+    void *status;
+    struct thread_data td[NUM_THREADS];
     int rc, thread_index;
 
-    //  Start Timers
-    double wall0 = get_wall_time();
-    double cpu0  = get_cpu_time();
 
 	if (argc < 2) {
 		cerr << "Error: Missing filename! Use " << argv[0] << " <filename>" << std::endl;
@@ -1251,9 +1292,14 @@ int main(int argc , char ** argv){
 	
     printConnList(connlist);
 
+    //  Start Timers
+    double wall0 = get_wall_time();
+    double cpu0  = get_cpu_time();    
+
     init_graphics("Assignment1", WHITE);
 	init_world(0, (chipw * 2 + 1)*(2 * chipn + 1), (chipw * 2 + 1)*(2 * chipn + 1), 0);
-	std::list<Connection>::iterator iter = connlist.begin();
+	//std::list<Connection>::iterator iter = connlist.begin();
+    iter = connlist.begin();
 	utilvars::routing = new Channel(chipn, chipw);
 
 	int cindex = YELLOW + 1;
@@ -1262,17 +1308,71 @@ int main(int argc , char ** argv){
 		cindex++;
 		if (cindex%NUM_COLOR==0) cindex = YELLOW + 1;
 	}
-
-
+    
+    
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	iter = connlist.begin();
+    
+    //multithreading
+    for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
+        cout << "main() : creating thread " << thread_index << endl;
+        rc = pthread_create(&threads[thread_index], NULL, routingThread, (void *)&td[thread_index]);
+      
+        if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+        }
+    }
+    // free attribute and wait for the other threads
+    pthread_attr_destroy(&attr);
+    for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
+        rc = pthread_join(threads[thread_index], &status);
+        if (rc) {
+            cout << "Error:unable to join," << rc << endl;
+            exit(-1);
+        }
+      
+        cout << "Main: completed thread id :" << thread_index << endl ;
+        cout << "  exiting with status :" << status << endl;
+    }
+
+    
+    /*
 	while (iter != connlist.end() && attempts<MAXATTEMPTS){
 		if (DRAWEACHROUTE)
 			event_loop(NULL, NULL, NULL, drawscreen);
 
 		cout << "Attempting Route: ";
 		iter->print();
+         
+        //multithreading
+        for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
+          cout << "main() : creating thread " << thread_index << endl;
+          rc = pthread_create(&threads[thread_index], NULL, routingThread, (void *)&td[thread_index]);
+      
+          if (rc) {
+            cout << "Error:unable to create thread," << rc << endl;
+            exit(-1);
+          }
+        }
 
+        // free attribute and wait for the other threads
+        pthread_attr_destroy(&attr);
+        for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
+          rc = pthread_join(threads[thread_index], &status);
+          if (rc) {
+            cout << "Error:unable to join," << rc << endl;
+            exit(-1);
+          }
+      
+          cout << "Main: completed thread id :" << thread_index << endl ;
+          cout << "  exiting with status :" << status << endl;
+        }
 
+        pthread_exit(NULL);
+        
+         
 		if (!utilvars::routing->route(iter->src(), iter->dest())){
 			attempts++;
 			if (attempts >= MAXATTEMPTS/2) utilvars::routing->tryHarder(true);
@@ -1286,7 +1386,8 @@ int main(int argc , char ** argv){
 			iter++;
 			update_message("...");
 		}
-	}
+        
+	}*/
 	if (attempts == MAXATTEMPTS){
 		string message = "Could not route after " + std::to_string(MAXATTEMPTS) + " attempts. Giving up.";
 		update_message(message.c_str());
@@ -1303,5 +1404,6 @@ int main(int argc , char ** argv){
     cout << "Wall Time = " << wall1 - wall0 << endl;
     cout << "CPU Time  = " << cpu1  - cpu0  << endl;
 	event_loop(NULL, NULL, NULL, drawscreen);
+    pthread_exit(NULL);    
 	return 0;
 }

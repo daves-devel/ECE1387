@@ -19,6 +19,7 @@ SRC = graphics.cpp main.cpp #example.cpp
 EXE = router
 BACKUP_FILENAME=`date "+backup-%Y%m%d-%H%M.zip"`
 FLAGS = -g -Wall -D$(PLATFORM) -std=c++11 -pthread
+#FLAGS = -g -D$(PLATFORM) -std=c++11 -pthread
 
 # Need to tell the linker to link to the X11 libraries.
 # WIN32 automatically links to the win32 API libraries (no need for flags)

@@ -53,7 +53,7 @@ enum SWITCH_BLOCK_MODE{
 };
 
 #ifndef SWBMODE
-#define SWBMODE CROSSBAR
+#define SWBMODE WILTON
 #endif
 
 double get_wall_time(){
@@ -186,7 +186,6 @@ public:
 	void clearAttempt();
 	int routingSegmentsUsed();
 	int maxW();
-	bool findSetAvailableNeighbours(wire t, std::list<wire>* neigh);
 	Segment * findSetAvailableNeighbours(Segment * t, std::list<Segment *> * neigh);
 	bool route(pin src, pin dest);
 	Segment* segmentAt(pin p, int w);
@@ -391,11 +390,6 @@ void Channel::clearAttempt(){
 		}
 	}
 
-}
-
-bool Channel::findSetAvailableNeighbours(wire t, std::list<wire> * neigh){
-	neigh->clear(); 
-	return false;
 }
 
 /*  
@@ -605,6 +599,7 @@ Segment * Channel::findSetAvailableNeighbours(Segment * t, std::list<Segment *> 
 }
 
 bool Channel::route(pin src, pin dest){
+   cout << "Entering route" << endl ;
 	//Mark available destination segments as targets
 	bool isOK = false;
 	for (int i = 0; i < W; i++){
@@ -644,9 +639,10 @@ bool Channel::route(pin src, pin dest){
 		}
 	}
 	//No available segments next to source pin
-	if (!isOK)
-		return false;
-
+	if (!isOK){
+        cout << "Exiting route" << endl ;
+	    return false;
+    }
 	Segment* toProcess, * trace=nullptr;
 	while (!expansion.empty() && trace == nullptr){
 //		event_loop(NULL, NULL, NULL, drawscreen);
@@ -663,7 +659,7 @@ bool Channel::route(pin src, pin dest){
 	trace->setDest(dest);
 	traceback(trace);
 
-
+    cout << "Exiting route" << endl ;    
 	//event_loop(NULL, NULL, NULL, drawscreen);
 	return true;
 
@@ -1245,10 +1241,13 @@ struct thread_data {
 void *routingThread(void *threadarg) {
    struct thread_data *my_data;
    my_data = (struct thread_data *) threadarg;
-   while (iter != connlist.end() && attempts<MAXATTEMPTS){
-		if (DRAWEACHROUTE)
-			event_loop(NULL, NULL, NULL, drawscreen);
+   //iter = connlist.begin();
+   //while (iter != connlist.end() && attempts<MAXATTEMPTS){
+	//	if (DRAWEACHROUTE)
+	//		event_loop(NULL, NULL, NULL, drawscreen);
 
+	//	cout << "Attempting Route: ";
+	//	iter->print();
 		cout << "Attempting Route: ";
 		iter->print();
 
@@ -1265,7 +1264,7 @@ void *routingThread(void *threadarg) {
             iter++;
             update_message("...");
         }
-  }
+  //}
    cout << "Thread ID : " << my_data->thread_id ;
 
    pthread_exit(NULL);
@@ -1313,7 +1312,7 @@ int main(int argc , char ** argv){
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	iter = connlist.begin();
-    
+    /* 
     //multithreading
     for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
         cout << "main() : creating thread " << thread_index << endl;
@@ -1337,14 +1336,14 @@ int main(int argc , char ** argv){
         cout << "  exiting with status :" << status << endl;
     }
 
+    */
     
-    /*
 	while (iter != connlist.end() && attempts<MAXATTEMPTS){
 		if (DRAWEACHROUTE)
 			event_loop(NULL, NULL, NULL, drawscreen);
 
-		cout << "Attempting Route: ";
-		iter->print();
+		//cout << "Attempting Route: ";
+		//iter->print();
          
         //multithreading
         for( thread_index = 0; thread_index < NUM_THREADS; thread_index++ ) {
@@ -1370,9 +1369,9 @@ int main(int argc , char ** argv){
           cout << "  exiting with status :" << status << endl;
         }
 
-        pthread_exit(NULL);
+        //pthread_exit(NULL);
         
-         
+        /* 
 		if (!utilvars::routing->route(iter->src(), iter->dest())){
 			attempts++;
 			if (attempts >= MAXATTEMPTS/2) utilvars::routing->tryHarder(true);
@@ -1386,8 +1385,8 @@ int main(int argc , char ** argv){
 			iter++;
 			update_message("...");
 		}
-        
-	}*/
+        */
+	}
 	if (attempts == MAXATTEMPTS){
 		string message = "Could not route after " + std::to_string(MAXATTEMPTS) + " attempts. Giving up.";
 		update_message(message.c_str());

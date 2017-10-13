@@ -1,0 +1,12 @@
+Compilation: 
+Ensure that we are starting from scratch type on the command line: 
+make clean 
+Set the switch block style by defining SWBMODE on line 56 in main.cpp, default is CROSSBAR
+Then to compile simply enter on the command line:
+make 
+Please note that all settings have been set in the make file (including scl enable devtoolset-2)
+
+Runing the router:
+The above compilation will generate the executable router, to run it on one of the ciruits simply type:
+./router <filename>
+where <filename> needs to be replaced by the circuit of interest.

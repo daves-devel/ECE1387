@@ -27,8 +27,8 @@ private:
 	std::list<int> nets;
 	std::list<std::pair<Block *, double>> connections;
 
-	int x;//[TODO] change to double?
-	int y; //[TODO] change to double?
+	double x;
+	double y;
 	bool fixed;
 	bool real;
 
@@ -36,16 +36,16 @@ public:
 	Block();
 	Block(int i);
 	Block(int i, std::list<int> l);
-	Block(int i, int xx, int yy); //[TODO] change to double?
-	Block(int i, int xx, int yy, std::list<int> l);
-	Block(int i, int xx, int yy, std::list<int> l, bool r);
+	Block(int i, double xx, double yy);
+	Block(int i, double xx, double yy, std::list<int> l);
+	Block(int i, double xx, double yy, std::list<int> l, bool r);
 
 	bool hasNet(int i);
 	void addNet(int i);
-	void setX(int xx); //[TODO] change to double?
-	void setY(int yy); //[TODO] change to double?
-	int getX(); //[TODO] change to double?
-	int getY(); //[TODO] change to double?
+	void setX(double xx); 
+	void setY(double yy);
+	double getX(); 
+	double getY();
 	int getBlockNum();
 	void setFixed(bool f=true);
 	bool isFixed();
@@ -63,8 +63,8 @@ class Net {
 private:
 	std::list<Block *> blocks;
 	int idx;
-	int x; //[TODO] change to double?
-	int y; //[TODO] change to double?
+	double x; 
+	double y;
 	bool real;
 
 
@@ -75,7 +75,7 @@ public:
 
 	void buildBlockList(std::list<Block> * blklst);
 	void buildConnections();// std::list<Block> * blklst);
-	int HPWL ();
+	double HPWL ();
 	void print();
 	void placeNet();
 };
@@ -128,11 +128,11 @@ void Net::buildConnections(){//std::list<Block> * blklst) {
 	}
 }
 
-int Net::HPWL(){
-	int xmin = 100; //[TODO] change to double and based on N
-	int ymin = 100; //[TODO] change to double and based on N
-	int xmax = 0; //[TODO] change to double and based on N
-	int ymax = 0; //[TODO] change to double and based on N
+double Net::HPWL(){
+	double xmin = 100; //[TODO] adjust to be based on N
+	double ymin = 100; //[TODO] adjust to be based on N
+	double xmax = 0; //[TODO] adjust to be based on N
+	double ymax = 0; //[TODO] adjust to be based on N
 	
 	if (real) {
 		for (auto& b : blocks) {
@@ -149,7 +149,6 @@ int Net::HPWL(){
 void Net::placeNet() {
 	const int size = blocks.size();
 	double weight = 2.0 / size;
-	std::vector<int> xpos;
 	std::vector<double> b;
 
 	b.resize(size);
@@ -190,7 +189,7 @@ Block::Block(int i, std::list<int> l) {
 
 }
 
-Block::Block(int i, int xx, int yy) { //[TODO] change to double
+Block::Block(int i, double xx, double yy) {
 	num = i;
 	x = xx; 
     y = yy;
@@ -199,7 +198,7 @@ Block::Block(int i, int xx, int yy) { //[TODO] change to double
 
 }
 
-Block::Block(int i, int xx, int yy, std::list<int> l) { //[TODO] change to double
+Block::Block(int i, double xx, double yy, std::list<int> l) {
 	num = i;
 	x = xx; 
 	y = yy;
@@ -208,7 +207,7 @@ Block::Block(int i, int xx, int yy, std::list<int> l) { //[TODO] change to doubl
 	real = true;
 
 }
-Block::Block(int i, int xx, int yy, std::list<int> l, bool r) { //[TODO] change to double
+Block::Block(int i, double xx, double yy, std::list<int> l, bool r) {
 	num = i;
 	x = xx;
 	y = yy;
@@ -230,10 +229,10 @@ void Block::addNet(int i) {
 
 int Block::getBlockNum() { return num; }
 
-void Block::setX(int xx) { x = xx; } //[TODO] change to double
-void Block::setY(int yy) { y = yy; } //[TODO] change to double
-int Block::getX() { return x; } //[TODO] change to double
-int Block::getY() { return y; } //[TODO] change to double
+void Block::setX(double xx) { x = xx; } 
+void Block::setY(double yy) { y = yy; }
+double Block::getX() { return x; }
+double Block::getY() { return y; } 
 void Block::setFixed(bool f) {
 	fixed = f;
 }
@@ -296,8 +295,8 @@ namespace commonvars{
 	std::vector<std::list<Block *>> blocksAt;
 	std::list<Block> tempRouting;
 	void updateBlocksAt();
-	std::list<Block *> getBlocksAt(int x, int y); //[TODO] change to double
-	std::list<Block *> getFreeBlocksAt(int x, int y); //[TODO] change to double
+	std::list<Block *> getBlocksAt(double x, double y); 
+	std::list<Block *> getFreeBlocksAt(double x, double y); 
 }
 
 void commonvars::updateBlocksAt() {
@@ -309,10 +308,10 @@ void commonvars::updateBlocksAt() {
 	}
 }
 
-std::list<Block *> commonvars::getBlocksAt(int x, int y) { //[TODO] change to double
+std::list<Block *> commonvars::getBlocksAt(double x, double y) { 
 	return blocksAt[x * 101 + y]; //[TODO] adjust to be based on N
 }
-std::list<Block *> commonvars::getFreeBlocksAt(int x, int y) { //[TODO] change to double
+std::list<Block *> commonvars::getFreeBlocksAt(double x, double y) { 
 	std::list <Block *> ret;
 	for (auto & b : blocksAt[x * 101 + y]) { //[TODO] adjust to be based on N
 		if (!b->isFixed()) {
@@ -327,6 +326,7 @@ int parseInputFile(char * fname){
 	string temp;
 	int blocknum;
 	int tempint;
+	double tempdouble;
 	std::list<int> templist;
 	size_t idx = 0;
 
@@ -386,22 +386,22 @@ int parseInputFile(char * fname){
 			std::list<Block>::iterator it = commonvars::allBlocks.begin();
 			for (; it != commonvars::allBlocks.end() && it->getBlockNum() != blocknum; it++);
 			//x position
-			try { tempint = std::stoi(temp, &idx); } //ensure conversion from string to int //[TODO] change to double
+			try { tempdouble = std::stod(temp, &idx); }
 			catch (const std::invalid_argument& ia) {
-				cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl; //[TODO] change to double
+				cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl;
 				return -1;
 			}
-			it->setX(tempint); //[TODO] change to double
+			it->setX(tempdouble);
 
 			temp.erase(0, idx);
 			//y position
-			try { tempint = std::stoi(temp, &idx); } //ensure conversion from string to int //[TODO] change to double
+			try { tempdouble = std::stod(temp, &idx); }
 			catch (const std::invalid_argument& ia) {
-				cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl; //[TODO] change to double
+				cerr << "Error: '" << temp << "' is not a valid decimal integer" << endl;
 				return -1;
 			}
 			temp.erase(0, idx);
-			it->setY(tempint); //[TODO] change to double
+			it->setY(tempdouble);
 			it->setFixed();
 			commonvars::numFreeBlocks--;
 		}
@@ -469,8 +469,8 @@ void initialPlace(std::list<Block> * blocks) {
     i=0;
     for (auto& b:*blocks){
         if (!b.isFixed()){
-            b.setX(lrint(x[i]));//[TODO] change to double by removing lrint
-            b.setY(lrint(y[i]));//[TODO] change to double by removing lrint
+            b.setX(x[i]);
+            b.setY(y[i]);
             i++;
         }
     }
@@ -480,8 +480,8 @@ void initialPlace(std::list<Block> * blocks) {
 
 void simpleOverlap() {
 	int n = commonvars::numFreeBlocks;
-	int x = 0; //[TODO] change to double 
-	int y = 0; //[TODO] change to double
+	double x = 0; 
+	double y = 0;
 	int sum = 0;
 	std::list<Block *> blst;
 	std::list<int> ilst;
@@ -579,8 +579,8 @@ void simpleOverlap() {
 
 }
 
-int wireusage (std::list<Net> * nets){
-    int sum = 0;
+double wireusage (std::list<Net> * nets){
+    double sum = 0;
     for(auto& n:*nets){
         sum += n.HPWL();
     }
@@ -603,7 +603,6 @@ void removeVirtualBlocks(std::list<Block> * blocks) {
 }
 
 void removeFixedBlocks(std::list<Block *> * blocks) {
-    //std::list<Block*> &bks = *blocks;
     if (blocks->size() !=0){
         std::list<Block*>::iterator it = blocks->begin();
         while (blocks->size() != 0 && it != blocks->end()){
@@ -625,14 +624,14 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 	std::list<Block *> templst;
 	blocksInRegion.resize(n*n);
 
-	std::vector<int> xp; //[TODO] change to double
-	std::vector<int> yp; //[TODO] change to double
+	std::vector<double> xp; 
+	std::vector<double> yp; 
 	xp.resize(n);
 	yp.resize(n);
 
 	int sum = 0;
 	int j = 0, k=0;
-	int x, y; //[TODO] change to double
+	double x, y;
 
 	for (x = 0; x <= 100; x++) { //[TODO] adjust to be based on N
 		for (y = 0; y <= 100; y++) { //[TODO] adjust to be based on N

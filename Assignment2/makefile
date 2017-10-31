@@ -23,9 +23,9 @@ PLATFORM = X11
 #PLATFORM = WIN32
 #PLATFORM = NO_GRAPHICS
 
-HDR = graphics.h easygl_constants.h block.h net.h utils.h SuiteSparse/UMFPACK/Include/umfpack.h
-SRC = graphics.cpp net.cpp net.cpp main.cpp utils.cpp
-EXE = assignment2
+HDR = graphics.h easygl_constants.h SuiteSparse/UMFPACK/Include/umfpack.h
+SRC = graphics.cpp main.cpp
+EXE = placement
 BACKUP_FILENAME=`date "+backup-%Y%m%d-%H%M.zip"`
 FLAGS = -g -Wall -Wextra -pedantic -D$(PLATFORM) -std=c++11 -lrt
 UMFPACKA = SuiteSparse/UMFPACK/Lib/libumfpack.a SuiteSparse/AMD/Lib/libamd.a SuiteSparse/SuiteSparse_config/libsuitesparseconfig.a \
@@ -35,24 +35,24 @@ UMFPACKI = -ISuiteSparse/UMFPACK/Include/ -ISuiteSparse/SuiteSparse_config/ -ISu
 # Need to tell the linker to link to the libraries.
 # WIN32 links to all the win32 API libraries every time (no need for flags)
 ifeq ($(PLATFORM),X11)
-   GRAPHICS_LIBS = -lX11 #-lXft -lfontconfig
+   GRAPHICS_LIBS = -lX11 -lXft -lfontconfig
    FLAGS += $(shell pkg-config --cflags freetype2) # evaluates to the correct include flags for the freetype headers
 endif
 
 all: umfpack $(EXE)
 
-$(EXE): graphics.o net.o block.o utils.o main.o
-	#scl enable devtoolset-2 'g++ $(FLAGS) $^ $(GRAPHICS_LIBS) $(UMFPACKA) -o $(EXE)'
-	g++ $(FLAGS) $^ $(GRAPHICS_LIBS) $(UMFPACKA) -o $(EXE)
-%	g++ $(FLAGS) -DMODE=BIDIR $^ $(GRAPHICS_LIBS) -o $(EXE)-bidir
-%	g++ $(FLAGS) -DMODE=UNIDIR $^ $(GRAPHICS_LIBS) -o $(EXE)-unidir
+$(EXE): graphics.o main.o
+	scl enable devtoolset-2 'g++ $(FLAGS) $^ $(GRAPHICS_LIBS) $(UMFPACKA) -o $(EXE)'
+#	g++ $(FLAGS) $^ $(GRAPHICS_LIBS) $(UMFPACKA) -o $(EXE)
+#%	g++ $(FLAGS) -DMODE=BIDIR $^ $(GRAPHICS_LIBS) -o $(EXE)-bidir
+#%	g++ $(FLAGS) -DMODE=UNIDIR $^ $(GRAPHICS_LIBS) -o $(EXE)-unidir
 
 # A generic make rule for creating a .o file from an identically named (sans extension) .cpp file
 # $< evaluates to the name of the _first_ dependency (the .cpp file in this case)
 # $@ evaluates to the name of the target (the .o file in this case)
 %.o: %.cpp $(HDR) 
-	#scl enable devtoolset-2 'g++ -c $(FLAGS) $(UMFPACKI) $< -o $@'
-	g++ -c $(FLAGS) $(UMFPACKI) $< -o $@
+	scl enable devtoolset-2 'g++ -c $(FLAGS) $(UMFPACKI) $< -o $@'
+	#g++ -c $(FLAGS) $(UMFPACKI) $< -o $@
 
 # graphics.o: graphics.cpp $(HDR)
 # 	g++ -c $(FLAGS) graphics.cpp

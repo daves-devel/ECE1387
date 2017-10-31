@@ -9,7 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
-
+#include <math.h>
 #include <random>
 #include <cfloat>
 
@@ -128,11 +128,24 @@ void Net::buildConnections(){//std::list<Block> * blklst) {
 	}
 }
 
+namespace commonvars{
+	int maxNetNum = 0;
+    int gridSize;
+	int numFreeBlocks = 0;
+	std::list<Block> allBlocks;
+	std::list<Net> allNets;
+	std::vector<std::list<Block *>> blocksAt;
+	std::list<Block> tempRouting;
+	void updateBlocksAt();
+	std::list<Block *> getBlocksAt(double x, double y); 
+	std::list<Block *> getFreeBlocksAt(double x, double y); 
+}
+
 double Net::HPWL(){
-	double xmin = 100; //[TODO] adjust to be based on N
-	double ymin = 100; //[TODO] adjust to be based on N
-	double xmax = 0; //[TODO] adjust to be based on N
-	double ymax = 0; //[TODO] adjust to be based on N
+	double xmin = commonvars::gridSize;
+	double ymin = commonvars::gridSize;
+	double xmax = 0; 
+	double ymax = 0; 
 	
 	if (real) {
 		for (auto& b : blocks) {
@@ -287,33 +300,22 @@ void Block::print() {
 
 bool isFixed(Block * b) { return b->isFixed(); }
 
-namespace commonvars{
-	int maxNetNum = 0;
-	int numFreeBlocks = 0;
-	std::list<Block> allBlocks;
-	std::list<Net> allNets;
-	std::vector<std::list<Block *>> blocksAt;
-	std::list<Block> tempRouting;
-	void updateBlocksAt();
-	std::list<Block *> getBlocksAt(double x, double y); 
-	std::list<Block *> getFreeBlocksAt(double x, double y); 
-}
 
 void commonvars::updateBlocksAt() {
 	blocksAt.clear();
-	blocksAt.resize(101 * 101);//[TODO] adjust to be based on N
+	blocksAt.resize((commonvars::gridSize + 1) * (commonvars::gridSize + 1));
 	for (auto& b : allBlocks) { 
 		if (b.getX() != -1 && b.getY() != -1)
-			blocksAt[b.getX() * 101 + b.getY()].push_back(&b); //[TODO] adjust to be based on N
+			blocksAt[b.getX() * (commonvars::gridSize + 1) + b.getY()].push_back(&b); 
 	}
 }
 
 std::list<Block *> commonvars::getBlocksAt(double x, double y) { 
-	return blocksAt[x * 101 + y]; //[TODO] adjust to be based on N
+	return blocksAt[x * (commonvars::gridSize + 1) + y];
 }
 std::list<Block *> commonvars::getFreeBlocksAt(double x, double y) { 
 	std::list <Block *> ret;
-	for (auto & b : blocksAt[x * 101 + y]) { //[TODO] adjust to be based on N
+	for (auto & b : blocksAt[x * (commonvars::gridSize + 1) + y]) {
 		if (!b->isFixed()) {
 			ret.emplace_back(b);
 		}
@@ -488,7 +490,7 @@ void simpleOverlap() {
 	double virtualWeight = commonvars::maxNetNum * 1.0 /commonvars::allBlocks.size();
 
 	while (sum*1.0 / n < 0.5) {
-		for (int i = 0; i < 101; i++) { //[TODO] adjust to be based on N
+		for (int i = 0; i < (commonvars::gridSize + 1); i++) {
 			blst = commonvars::getBlocksAt(x, i);
 			blst.remove_if(isFixed);
 			sum += blst.size();
@@ -497,7 +499,7 @@ void simpleOverlap() {
 	}
 	sum = 0;
 	while (sum*1.0 / n < 0.5) {
-		for (int i = 0; i < 101; i++) { //[TODO] adjust to be based on N
+		for (int i = 0; i < (commonvars::gridSize + 1); i++) { 
 			blst = commonvars::getBlocksAt(i, y);
 			blst.remove_if(isFixed);
 			sum += blst.size();
@@ -526,7 +528,7 @@ void simpleOverlap() {
 //Q2
 	blst.clear();
 	ilst.clear();
-	for (int i = x; i < 101; i++) { //[TODO] adjust to be based on N
+	for (int i = x; i < (commonvars::gridSize + 1); i++) {
 		for (int j = 0; j < y; j++) {
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
@@ -544,7 +546,7 @@ void simpleOverlap() {
 	blst.clear();
 	ilst.clear();
 	for (int i = 0; i < x; i++) {
-		for (int j = y; j < 101; j++) { //[TODO] adjust to be based on N
+		for (int j = y; j < (commonvars::gridSize + 1); j++) {
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -560,8 +562,8 @@ void simpleOverlap() {
 //Q4
 	blst.clear();
 	ilst.clear();
-	for (int i = x; i < 101; i++) { //[TODO] adjust to be based on N
-		for (int j = y; j < 101; j++) { //[TODO] adjust to be based on N
+	for (int i = x; i < (commonvars::gridSize + 1); i++) { 
+		for (int j = y; j < (commonvars::gridSize + 1); j++) { 
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -633,8 +635,8 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 	int j = 0, k=0;
 	double x, y;
 
-	for (x = 0; x <= 100; x++) { //[TODO] adjust to be based on N
-		for (y = 0; y <= 100; y++) { //[TODO] adjust to be based on N
+	for (x = 0; x <= commonvars::gridSize; x++) { 
+		for (y = 0; y <= commonvars::gridSize; y++) { 
 			templst = commonvars::getFreeBlocksAt(x, y);
 			sum += templst.size();
 		}
@@ -645,8 +647,8 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 	}
 	j = 0;
 	sum = 0;
-	for (y = 0; y <= 100; y++) { //[TODO] adjust to be based on N
-		for (x = 0; x <= 100; x++) { //[TODO] adjust to be based on N
+	for (y = 0; y <= commonvars::gridSize; y++) {
+		for (x = 0; x <= commonvars::gridSize; x++) { 
 			templst = commonvars::getBlocksAt(x, y);
 			removeFixedBlocks(&templst);
 			sum += templst.size();
@@ -658,10 +660,10 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 	}
 	j = 0;
 
-	for (x = 0; x <= 100; x++) { //[TODO] adjust to be based on N
+	for (x = 0; x <= commonvars::gridSize; x++) {
 		if (x > xp[j] && j < n-1) j++; 
 		k = 0;
-		for (y = 0; y <= 100; y++) { //[TODO] adjust to be based on N
+		for (y = 0; y <= commonvars::gridSize; y++) {
 			if (y > yp[k] && k < n - 1) k++;
 			blocksInRegion[j*n + k].splice(blocksInRegion[j*n + k].end(), commonvars::getBlocksAt(x, y));
 		}
@@ -673,7 +675,7 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 			blocksInRegion[x*n + y].remove_if(isFixed);
 			if (blocksInRegion[x*n + y].size()>2) sum += blocksInRegion[x*n + y].size() - 2;
 			std::list<int> u;
-			commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (100 * x + 50) / n, (100 * y + 50) / n, u, false); //[TODO] adjust to be based on N
+			commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize * x + 5) / n, (commonvars::gridSize * y + 5) / n, u, false);
 			commonvars::allBlocks.back().setFixed();
 			for (auto& b : blocksInRegion[x*n + y]) {
 				b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
@@ -700,9 +702,9 @@ void drawscreen(){
 
 	setcolor(LIGHTGREY); //[TODO] change colour
 	
-	for (int i = 0; i <= 101; i++) {
-		drawline(i * 10, 0, i * 10, 1010); //[TODO] adjust to be based on N
-		drawline(0, i * 10, 1010, i * 10); //[TODO] adjust to be based on N
+	for (int i = 0; i <= commonvars::gridSize + 1; i++) {
+		drawline(i * 10, 0, i * 10, commonvars::gridSize * 10); 
+		drawline(0, i * 10, commonvars::gridSize * 10, i * 10);
 	}
 
 	setcolor(RED);
@@ -752,9 +754,11 @@ int main(int argc, char** argv) {
 
 	cout << "Found " << commonvars::allBlocks.size() << " blocks." << endl;
 	cout << "Found a max of " << commonvars::maxNetNum << " nets." << endl;
+    commonvars::gridSize = ceil(sqrt(commonvars::allBlocks.size()));
+	cout << "Grid size is " << commonvars::gridSize << endl;
 
 	init_graphics("Analytical Placer", WHITE);
-	init_world(0, 0, 1010, 1010); //[TODO] adjust to be based on N
+	init_world(0, 0, commonvars::gridSize * 10, commonvars::gridSize * 10);
 
 	for (int i = 1; i <= commonvars::maxNetNum; i++) {
 		commonvars::allNets.emplace_back(i);

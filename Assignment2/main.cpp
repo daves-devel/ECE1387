@@ -415,6 +415,7 @@ int parseInputFile(char * fname){
 }//parseInputFile
 
 void initialPlace(std::list<Block> * blocks) {
+
 	std::vector<double> bx;
 	std::vector<double> by;
 	std::vector<int> Ap;
@@ -429,7 +430,7 @@ void initialPlace(std::list<Block> * blocks) {
 	y.resize(commonvars::numFreeBlocks);
 	Ap.resize(commonvars::numFreeBlocks+1);
 	Ap[0] = 0;
-
+    
 	unsigned int i = 0;
 	for (auto& blki:*blocks){
 		int j = 0;
@@ -520,7 +521,7 @@ void simpleOverlap() {
 	for (auto& b : blst) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, 25, 25, ilst, false);
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
 	commonvars::allBlocks.back().setFixed();
 	for (auto & b : blst) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
@@ -537,7 +538,7 @@ void simpleOverlap() {
 	for (auto& b : blst) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, 75, 25, ilst, false);
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4), ilst, false);
 	commonvars::allBlocks.back().setFixed();
 	for (auto & b : blst) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
@@ -554,7 +555,7 @@ void simpleOverlap() {
 	for (auto& b : blst) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, 25, 75, ilst, false);
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
 	for (auto & b : blst) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
@@ -571,12 +572,11 @@ void simpleOverlap() {
 	for (auto& b : blst) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, 75, 75, ilst, false);
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
 	for (auto & b : blst) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-
 	initialPlace(&commonvars::allBlocks);
 
 }
@@ -700,7 +700,7 @@ void drawscreen(){
 	setlinestyle(SOLID);
 	setlinewidth(1);
 
-	setcolor(LIGHTGREY); //[TODO] change colour
+	setcolor(BLACK); //[TODO] change colour
 	
 	for (int i = 0; i <= commonvars::gridSize + 1; i++) {
 		drawline(i * 10, 0, i * 10, commonvars::gridSize * 10); 
@@ -757,7 +757,7 @@ int main(int argc, char** argv) {
     commonvars::gridSize = ceil(sqrt(commonvars::allBlocks.size()));
 	cout << "Grid size is " << commonvars::gridSize << endl;
 
-	init_graphics("Analytical Placer", WHITE);
+	init_graphics("Assignment 2: AP", WHITE);
 	init_world(0, 0, commonvars::gridSize * 10, commonvars::gridSize * 10);
 
 	for (int i = 1; i <= commonvars::maxNetNum; i++) {

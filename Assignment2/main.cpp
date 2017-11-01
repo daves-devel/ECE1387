@@ -288,12 +288,12 @@ double Block::getWeight(Block * b) {
 
 void Block::print() {
 	if (num != -1) {
-		std::list<int>::iterator it = nets.begin();
-		cout << "Block " << num << " is connected to nets (" << *it;
+		//std::list<int>::iterator it = nets.begin();
+		cout << "Block num " << num << " x " << x << " y " << y <<" fixed " << fixed << " real " << real << endl; // " is connected to nets (" << *it;
 
-		for (it++; it != nets.end(); it++)
-			cout << ", " << *it;
-		cout << ")" << endl;
+		//for (it++; it != nets.end(); it++)
+		//	cout << ", " << *it;
+		//cout << ")" << endl;
 	}
 }
 
@@ -488,10 +488,10 @@ void simpleOverlap() {
 	int sum = 0;
 	std::list<Block *> blst;
 	std::list<int> ilst;
-	double virtualWeight = commonvars::maxNetNum * 1.0 /commonvars::allBlocks.size();
+	double virtualWeight = commonvars::maxNetNum * 30.0 /commonvars::allBlocks.size();
 
 	while (sum*1.0 / n < 0.5) {
-		for (int i = 0; i < (commonvars::gridSize + 1); i++) {
+		for (double i = 0; i < (commonvars::gridSize + 1); i++) {
 			blst = commonvars::getBlocksAt(x, i);
 			blst.remove_if(isFixed);
 			sum += blst.size();
@@ -500,7 +500,7 @@ void simpleOverlap() {
 	}
 	sum = 0;
 	while (sum*1.0 / n < 0.5) {
-		for (int i = 0; i < (commonvars::gridSize + 1); i++) { 
+		for (double i = 0; i < (commonvars::gridSize + 1); i++) { 
 			blst = commonvars::getBlocksAt(i, y);
 			blst.remove_if(isFixed);
 			sum += blst.size();
@@ -512,8 +512,8 @@ void simpleOverlap() {
 //Q1
 	blst.clear();
 
-	for (int i = 0; i < x; i++) {
-		for (int j = 0; j < y; j++) {
+	for (double i = 0; i < x; i++) {
+		for (double j = 0; j < y; j++) {
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -529,8 +529,8 @@ void simpleOverlap() {
 //Q2
 	blst.clear();
 	ilst.clear();
-	for (int i = x; i < (commonvars::gridSize + 1); i++) {
-		for (int j = 0; j < y; j++) {
+	for (double i = x; i < (commonvars::gridSize + 1); i++) {
+		for (double j = 0; j < y; j++) {
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -546,8 +546,8 @@ void simpleOverlap() {
 //Q3
 	blst.clear();
 	ilst.clear();
-	for (int i = 0; i < x; i++) {
-		for (int j = y; j < (commonvars::gridSize + 1); j++) {
+	for (double i = 0; i < x; i++) {
+		for (double j = y; j < (commonvars::gridSize + 1); j++) {
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -563,8 +563,8 @@ void simpleOverlap() {
 //Q4
 	blst.clear();
 	ilst.clear();
-	for (int i = x; i < (commonvars::gridSize + 1); i++) { 
-		for (int j = y; j < (commonvars::gridSize + 1); j++) { 
+	for (double i = x; i < (commonvars::gridSize + 1); i++) { 
+		for (double j = y; j < (commonvars::gridSize + 1); j++) { 
 			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
 		}
 	}
@@ -702,9 +702,9 @@ void drawscreen(){
 
 	setcolor(BLACK); //[TODO] change colour
 	
-	for (int i = 0; i <= commonvars::gridSize + 1; i++) {
-		drawline(i * 10, 0, i * 10, commonvars::gridSize * 10); 
-		drawline(0, i * 10, commonvars::gridSize * 10, i * 10);
+	for (double i = 0; i < commonvars::gridSize + 1; i++) {
+		drawline(i * 10.0, 0.0, i * 10.0, commonvars::gridSize * 10.0); 
+		drawline(0, i * 10.0, commonvars::gridSize * 10.0, i * 10.0);
 	}
 
 	setcolor(RED);
@@ -715,7 +715,7 @@ void drawscreen(){
 				if (b.getWeight(&bp) != 0) {
 					if (!bp.isReal()) setcolor(GREEN);
 					else setcolor(RED);
-					drawline(b.getX() * 10 + 5, b.getY() * 10 + 5, bp.getX() * 10 + 5, bp.getY() * 10 + 5); //[TODO] adjust to be based on N
+					drawline(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, bp.getX() * 10.0 + 5.0, bp.getY() * 10.0 + 5.0); //[TODO] adjust to be based on N
 				}
 			}
 	}
@@ -724,9 +724,16 @@ void drawscreen(){
 
 	for (auto& b : *(bks)) {
 		if (b.isReal()){
+            setcolor(BLUE);
 		    std::string s = std::to_string(b.getBlockNum());
 		    const char * c_string_block_num = s.c_str();
-			drawtext(b.getX() * 10+5, b.getY() * 10+5, c_string_block_num,150); //[TODO] adjust to be based on N
+			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); //[TODO] adjust to be based on N
+		}
+		else{
+            setcolor(GREEN);
+		    std::string s = std::to_string(b.getBlockNum());
+		    const char * c_string_block_num = s.c_str();
+			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); //[TODO] adjust to be based on N
 		}
 
 	}
@@ -749,8 +756,8 @@ int main(int argc, char** argv) {
 	}*/
 
 	parseInputFile(argv[1]);
-//	for (auto& x : commonvars::allBlocks)
-//		x.print();
+	for (auto& x : commonvars::allBlocks)
+		x.print();
 
 	cout << "Found " << commonvars::allBlocks.size() << " blocks." << endl;
 	cout << "Found a max of " << commonvars::maxNetNum << " nets." << endl;
@@ -773,11 +780,17 @@ int main(int argc, char** argv) {
 	}
 
 	initialPlace(&commonvars::allBlocks);
+    for (auto& x : commonvars::allBlocks)
+		x.print();
+    
     cout << "Used "<< wireusage(&commonvars::allNets) << " units of wiring. " << endl;
 
 	event_loop(NULL, NULL, NULL, drawscreen);
 
 	simpleOverlap();
+
+    for (auto& x : commonvars::allBlocks)
+		x.print();
 
 	cout << "Used " << wireusage(&commonvars::allNets) << " units of wiring. (basic spread)" << endl;
 

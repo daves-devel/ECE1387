@@ -515,107 +515,100 @@ void initialPlace(std::list<Block> * blocks) {
 	
 }//initialPlace
 
-/*
+
 void simpleSpreading() {
 
 	double x = 0; 
 	double y = 0;
-	std::list<Block *> blst;
-    std::list<Block *> hblst;
-    std::list<Block *> vblst;
+	std::list<Block *> tempblst;    
+	std::list<Block *> blst;    
+	std::list<Block *>::iterator it;
+	std::list<int> ilst;     
 	double virtualWeight = commonvars::maxNetNum * 30.0 /commonvars::allBlocks.size();
 
     //create a list of blocks
 	for (x = 0; x <= commonvars::gridSize; x++) { 
 		for (y = 0; y <= commonvars::gridSize; y++) { 
-			blst = commonvars::getFreeBlocksAt(x, y);
+			tempblst = commonvars::getBlocksAt(x, y);
+			tempblst.remove_if(isFixed);
+            blst.splice(blst.end(), tempblst);
         }
     }
 
-    struct CompareBlockX{
-        bool operator()(Block * lhs, Block * rhs) {return lhs->x < rhs->x;}
+
+
+    struct compareBlockX{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->getX() < rhs->getX();}
     };
 
-    struct CompareBlockY{
-        bool operator()(Block * lhs, Block * rhs) {return lhs->y < rhs->y;}
+    struct compareBlockY{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->getY() < rhs->getY();}
     };
     
     //sort list vertically
+    blst.sort(compareBlockY());
 
     //sort list horizontally
+    blst.sort(compareBlockX());    
 
+    auto quarter = std::next(blst.begin(), blst.size()/4);
+    auto middle =  std::next(blst.begin(), blst.size()/2);
+    auto threefourths = std::next(blst.begin(), (blst.size() * 3 / 4));
 
- //Q1
-	blst.clear();
-	for (double i = 0; i < x; i++) {
-		for (double j = 0; j < y; j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+   	std::list<Block *> blstq1 (blst.begin(), quarter);    
+	std::list<Block *> blstq2 (quarter, middle);    
+	std::list<Block *> blstq3 (middle, threefourths);    
+	std::list<Block *> blstq4 (threefourths, blst.end()); 
+
+    //Q1
+	for (auto& b : blstq1) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
+    //Create dummy cells
+    commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq1) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q2
-	blst.clear();
+
+    //Q2
 	ilst.clear();
-	for (double i = x; i < (commonvars::gridSize + 1); i++) {
-		for (double j = 0; j < y; j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq2) {
 		ilst.push_back(b->getBlockNum());
 	}
+    //Create dummy cells
 	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4), ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq2) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q3
-	blst.clear();
+
+    //Q3
 	ilst.clear();
-	for (double i = 0; i < x; i++) {
-		for (double j = y; j < (commonvars::gridSize + 1); j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq3) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
+    //Create dummy cells
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq3) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q4
-	blst.clear();
+
+    //Q4
 	ilst.clear();
-	for (double i = x; i < (commonvars::gridSize + 1); i++) { 
-		for (double j = y; j < (commonvars::gridSize + 1); j++) { 
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq4) {
 		ilst.push_back(b->getBlockNum());
 	}
+    //Create dummy cells
 	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq4) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-	initialPlace(&commonvars::allBlocks)
 
+	initialPlace(&commonvars::allBlocks);
 }
-*/
 
 void simpleOverlap() {
 	int n = commonvars::numFreeBlocks;
@@ -854,7 +847,7 @@ void drawscreen(){
 	setlinewidth(1);
     setfontsize(24);
 
-	setcolor(BLACK); //[TODO] change colour
+	setcolor(BLACK);
 	
 	for (double i = 0; i < commonvars::gridSize + 1; i++) {
 		drawline(i * 10.0, 0.0, i * 10.0, commonvars::gridSize * 10.0); 
@@ -869,7 +862,7 @@ void drawscreen(){
 				if (b.getWeight(&bp) != 0) {
 					if (!bp.isReal()) setcolor(GREEN);
 					else setcolor(RED);
-					drawline(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, bp.getX() * 10.0 + 5.0, bp.getY() * 10.0 + 5.0); //[TODO] adjust to be based on N
+					drawline(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, bp.getX() * 10.0 + 5.0, bp.getY() * 10.0 + 5.0); 
 				}
 			}
 	}
@@ -881,13 +874,13 @@ void drawscreen(){
             setcolor(BLUE);
 		    std::string s = std::to_string(b.getBlockNum());
 		    const char * c_string_block_num = s.c_str();
-			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); //[TODO] adjust to be based on N
+			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); 
 		}
 		else{
             setcolor(GREEN);
 		    std::string s = std::to_string(b.getBlockNum());
 		    const char * c_string_block_num = s.c_str();
-			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); //[TODO] adjust to be based on N
+			drawtext(b.getX() * 10.0 + 5.0, b.getY() * 10.0 + 5.0, c_string_block_num,150); 
 		}
 
 	}
@@ -941,7 +934,8 @@ int main(int argc, char** argv) {
 
 	event_loop(NULL, NULL, NULL, drawscreen);
 
-	simpleOverlap();
+    simpleSpreading();
+	//simpleOverlap();
 
     for (auto& x : commonvars::allBlocks)
 		x.print();

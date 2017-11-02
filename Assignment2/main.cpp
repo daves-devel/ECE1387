@@ -31,6 +31,7 @@ private:
 	double y;
 	bool fixed;
 	bool real;
+    int grid_index;
 
 public:
 	Block();
@@ -44,8 +45,11 @@ public:
 	void addNet(int i);
 	void setX(double xx); 
 	void setY(double yy);
+    void setGridIndex(int gridIndex);
 	double getX(); 
 	double getY();
+	int getIntX(); 
+	int getIntY();    
 	int getBlockNum();
 	void setFixed(bool f=true);
 	bool isFixed();
@@ -180,6 +184,7 @@ Block::Block() {
 	num = -1;
 	x = -1;
 	y = -1;
+    grid_index = -1;
 	fixed = false;
 	real = true;
 }
@@ -188,6 +193,7 @@ Block::Block(int i) {
 	num = i;
 	x = -1;
 	y = -1;
+    grid_index =-1;
 	fixed = false;
 	real = true;
 }
@@ -196,6 +202,7 @@ Block::Block(int i, std::list<int> l) {
 	num = i;
 	x = -1;
 	y = -1;
+    grid_index =-1;
 	nets = l;
 	fixed = false;
 	real = true;
@@ -206,6 +213,7 @@ Block::Block(int i, double xx, double yy) {
 	num = i;
 	x = xx; 
     y = yy;
+    grid_index =-1;    
 	fixed = false;
 	real = true;
 
@@ -216,6 +224,7 @@ Block::Block(int i, double xx, double yy, std::list<int> l) {
 	x = xx; 
 	y = yy;
 	nets = l;
+    grid_index =-1;    
 	fixed = false;
 	real = true;
 
@@ -225,6 +234,7 @@ Block::Block(int i, double xx, double yy, std::list<int> l, bool r) {
 	x = xx;
 	y = yy;
 	nets = l;
+    grid_index =-1;    
 	fixed = false;
 	real = r;
 
@@ -244,8 +254,19 @@ int Block::getBlockNum() { return num; }
 
 void Block::setX(double xx) { x = xx; } 
 void Block::setY(double yy) { y = yy; }
+void Block::setGridIndex(int gridIndex) { grid_index = gridIndex; }
 double Block::getX() { return x; }
-double Block::getY() { return y; } 
+double Block::getY() { return y; }
+int Block::getIntX() {
+    double tempx = x + 0.5;
+    int tempIntx = (int)tempx;
+    return tempIntx; 
+}
+int Block::getIntY() {
+    double tempy = y + 0.5;
+    int tempInty = (int)tempy;
+    return tempInty; 
+}
 void Block::setFixed(bool f) {
 	fixed = f;
 }
@@ -289,7 +310,7 @@ double Block::getWeight(Block * b) {
 void Block::print() {
 	if (num != -1) {
 		//std::list<int>::iterator it = nets.begin();
-		cout << "Block num " << num << " x " << x << " y " << y <<" fixed " << fixed << " real " << real << endl; // " is connected to nets (" << *it;
+		cout << "Block num " << num << " x " << x << " y " << y <<" fixed " << fixed << " real " << real << " grid_index " << grid_index << endl; // " is connected to nets (" << *it;
 
 		//for (it++; it != nets.end(); it++)
 		//	cout << ", " << *it;
@@ -305,17 +326,30 @@ void commonvars::updateBlocksAt() {
 	blocksAt.clear();
 	blocksAt.resize((commonvars::gridSize + 1) * (commonvars::gridSize + 1));
 	for (auto& b : allBlocks) { 
-		if (b.getX() != -1 && b.getY() != -1)
-			blocksAt[b.getX() * (commonvars::gridSize + 1) + b.getY()].push_back(&b); 
+		if (b.getX() != -1 && b.getY() != -1){
+            int binIndex = b.getIntX() * (commonvars::gridSize + 1) + b.getIntY();
+            b.setGridIndex(binIndex);
+			blocksAt[binIndex].push_back(&b);
+        }
 	}
 }
 
-std::list<Block *> commonvars::getBlocksAt(double x, double y) { 
-	return blocksAt[x * (commonvars::gridSize + 1) + y];
+std::list<Block *> commonvars::getBlocksAt(double x, double y) {
+    double tempx = x + 0.5;
+    double tempy = y + 0.5;
+    int tempIntx = int(tempx);
+    int tempInty = int(tempy);
+    int binIndex = tempIntx * (commonvars::gridSize + 1) + tempInty;
+	return blocksAt[binIndex];
 }
 std::list<Block *> commonvars::getFreeBlocksAt(double x, double y) { 
 	std::list <Block *> ret;
-	for (auto & b : blocksAt[x * (commonvars::gridSize + 1) + y]) {
+    double tempx = x + 0.5;
+    double tempy = y + 0.5;
+    int tempIntx = int(tempx);
+    int tempInty = int(tempy);
+    int binIndex = tempIntx * (commonvars::gridSize + 1) + tempInty;    
+	for (auto & b : blocksAt[binIndex]) {
 		if (!b->isFixed()) {
 			ret.emplace_back(b);
 		}
@@ -481,6 +515,108 @@ void initialPlace(std::list<Block> * blocks) {
 	
 }//initialPlace
 
+/*
+void simpleSpreading() {
+
+	double x = 0; 
+	double y = 0;
+	std::list<Block *> blst;
+    std::list<Block *> hblst;
+    std::list<Block *> vblst;
+	double virtualWeight = commonvars::maxNetNum * 30.0 /commonvars::allBlocks.size();
+
+    //create a list of blocks
+	for (x = 0; x <= commonvars::gridSize; x++) { 
+		for (y = 0; y <= commonvars::gridSize; y++) { 
+			blst = commonvars::getFreeBlocksAt(x, y);
+        }
+    }
+
+    struct CompareBlockX{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->x < rhs->x;}
+    };
+
+    struct CompareBlockY{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->y < rhs->y;}
+    };
+    
+    //sort list vertically
+
+    //sort list horizontally
+
+
+ //Q1
+	blst.clear();
+	for (double i = 0; i < x; i++) {
+		for (double j = 0; j < y; j++) {
+			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
+		}
+	}
+	blst.remove_if(isFixed);
+	for (auto& b : blst) {
+		ilst.push_back(b->getBlockNum());
+	}
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
+	commonvars::allBlocks.back().setFixed();
+	for (auto & b : blst) {
+		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
+	}
+//Q2
+	blst.clear();
+	ilst.clear();
+	for (double i = x; i < (commonvars::gridSize + 1); i++) {
+		for (double j = 0; j < y; j++) {
+			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
+		}
+	}
+	blst.remove_if(isFixed);
+	for (auto& b : blst) {
+		ilst.push_back(b->getBlockNum());
+	}
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4), ilst, false);
+	commonvars::allBlocks.back().setFixed();
+	for (auto & b : blst) {
+		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
+	}
+//Q3
+	blst.clear();
+	ilst.clear();
+	for (double i = 0; i < x; i++) {
+		for (double j = y; j < (commonvars::gridSize + 1); j++) {
+			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
+		}
+	}
+	blst.remove_if(isFixed);
+	for (auto& b : blst) {
+		ilst.push_back(b->getBlockNum());
+	}
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
+	commonvars::allBlocks.back().setFixed();
+	for (auto & b : blst) {
+		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
+	}
+//Q4
+	blst.clear();
+	ilst.clear();
+	for (double i = x; i < (commonvars::gridSize + 1); i++) { 
+		for (double j = y; j < (commonvars::gridSize + 1); j++) { 
+			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
+		}
+	}
+	blst.remove_if(isFixed);
+	for (auto& b : blst) {
+		ilst.push_back(b->getBlockNum());
+	}
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4) * 3, ilst, false);
+	commonvars::allBlocks.back().setFixed();
+	for (auto & b : blst) {
+		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
+	}
+	initialPlace(&commonvars::allBlocks)
+
+}
+*/
+
 void simpleOverlap() {
 	int n = commonvars::numFreeBlocks;
 	double x = 0; 
@@ -488,15 +624,30 @@ void simpleOverlap() {
 	int sum = 0;
 	std::list<Block *> blst;
 	std::list<int> ilst;
-	double virtualWeight = commonvars::maxNetNum * 30.0 /commonvars::allBlocks.size();
+	double virtualWeight = commonvars::maxNetNum * 10.0 /commonvars::allBlocks.size();
 
-	while (sum*1.0 / n < 0.5) {
+/*
+    while (sum*1.0 / n < 0.25) {
+	  for (int i = 0; i < (commonvars::gridSize + 1); i++) {
+        for (int j = 0; j < (commonvars::gridSize + 1); j++) {
+			blst = commonvars::getBlocksAt(i, j);
+			blst.remove_if(isFixed);
+			sum += blst.size();
+		}
+        y++;
+      }
+        
+        x++;              
+	}
+*/
+
+    while (sum*1.0 / n < 0.5) {
 		for (double i = 0; i < (commonvars::gridSize + 1); i++) {
 			blst = commonvars::getBlocksAt(x, i);
 			blst.remove_if(isFixed);
 			sum += blst.size();
 		}
-		x++;
+		    x++;
 	}
 	sum = 0;
 	while (sum*1.0 / n < 0.5) {
@@ -505,10 +656,12 @@ void simpleOverlap() {
 			blst.remove_if(isFixed);
 			sum += blst.size();
 		}
-		y++;
+		    y++;
 	}
 
+    x = x - 1;
 	cout << "x = " << x << "; y = " << y << endl;
+
 //Q1
 	blst.clear();
 
@@ -699,6 +852,7 @@ void drawscreen(){
 
 	setlinestyle(SOLID);
 	setlinewidth(1);
+    setfontsize(24);
 
 	setcolor(BLACK); //[TODO] change colour
 	

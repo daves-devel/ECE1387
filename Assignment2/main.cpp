@@ -1,4 +1,4 @@
-#define DO_FULL_SPREADING 0 //[TODO] change to part 3 or change into an argument
+//#define DO_FULL_SPREADING 0 //[TODO] change to part 3 or change into an argument
 
 #include <iostream>
 #include <fstream>
@@ -610,122 +610,105 @@ void simpleSpreading() {
 	initialPlace(&commonvars::allBlocks);
 }
 
-void simpleOverlap() {
-	int n = commonvars::numFreeBlocks;
-	double x = 0; 
-	double y = 0;
-	int sum = 0;
-	std::list<Block *> blst;
+void simpleSpreadingRecursive(std::list<Block *> blst, int count) {
+	std::list<Block *> tempblst;    
+	std::list<Block *>::iterator it;
 	std::list<int> ilst;
-	double virtualWeight = commonvars::maxNetNum * 10.0 /commonvars::allBlocks.size();
+	double virtualWeight = commonvars::maxNetNum * 30.0 /commonvars::allBlocks.size();
 
-/*
-    while (sum*1.0 / n < 0.25) {
-	  for (int i = 0; i < (commonvars::gridSize + 1); i++) {
-        for (int j = 0; j < (commonvars::gridSize + 1); j++) {
-			blst = commonvars::getBlocksAt(i, j);
-			blst.remove_if(isFixed);
-			sum += blst.size();
-		}
-        y++;
-      }
-        
-        x++;              
-	}
-*/
+    struct compareBlockX{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->getX() < rhs->getX();}
+    };
 
-    while (sum*1.0 / n < 0.5) {
-		for (double i = 0; i < (commonvars::gridSize + 1); i++) {
-			blst = commonvars::getBlocksAt(x, i);
-			blst.remove_if(isFixed);
-			sum += blst.size();
-		}
-		    x++;
-	}
-	sum = 0;
-	while (sum*1.0 / n < 0.5) {
-		for (double i = 0; i < (commonvars::gridSize + 1); i++) { 
-			blst = commonvars::getBlocksAt(i, y);
-			blst.remove_if(isFixed);
-			sum += blst.size();
-		}
-		    y++;
-	}
+    struct compareBlockY{
+        bool operator()(Block * lhs, Block * rhs) {return lhs->getY() < rhs->getY();}
+    };
+    
+    /*
+	for (x = 0; x <= commonvars::gridSize; x++) { 
+		for (y = 0; y <= commonvars::gridSize; y++) { 
+			tempblst = commonvars::getBlocksAt(x, y);
+            if(tempblst.size() > 1)
+                filled_count++;
+        }
+    }
+    
+    if(filled_count * 1.0/commonvars::numFreeBlocks < 0.15)
+    */
 
-    x = x - 1;
-	cout << "x = " << x << "; y = " << y << endl;
+    //sort list vertically
+    blst.sort(compareBlockY());
 
-//Q1
-	blst.clear();
+    //sort list horizontally
+    blst.sort(compareBlockX());    
 
-	for (double i = 0; i < x; i++) {
-		for (double j = 0; j < y; j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+    auto quarter = std::next(blst.begin(), blst.size()/4);
+    auto middle =  std::next(blst.begin(), blst.size()/2);
+    auto threefourths = std::next(blst.begin(), (blst.size() * 3 / 4));
+
+   	std::list<Block *> blstq1 (blst.begin(), quarter);    
+	std::list<Block *> blstq2 (quarter, middle);    
+	std::list<Block *> blstq3 (middle, threefourths);    
+	std::list<Block *> blstq4 (threefourths, blst.end()); 
+
+    //Q1
+	for (auto& b : blstq1) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
+    //Create dummy cells
+    commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4), (commonvars::gridSize / 4) , ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq1) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q2
-	blst.clear();
+
+    //Q2
 	ilst.clear();
-	for (double i = x; i < (commonvars::gridSize + 1); i++) {
-		for (double j = 0; j < y; j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq2) {
 		ilst.push_back(b->getBlockNum());
 	}
+    //Create dummy cells
 	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4), ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq2) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q3
-	blst.clear();
+
+    //Q3
 	ilst.clear();
-	for (double i = 0; i < x; i++) {
-		for (double j = y; j < (commonvars::gridSize + 1); j++) {
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq3) {
 		ilst.push_back(b->getBlockNum());
 	}
-	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
+    //Create dummy cells
+	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1, (commonvars::gridSize / 4),  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq3) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
-//Q4
-	blst.clear();
+
+    //Q4
 	ilst.clear();
-	for (double i = x; i < (commonvars::gridSize + 1); i++) { 
-		for (double j = y; j < (commonvars::gridSize + 1); j++) { 
-			blst.splice(blst.end(), commonvars::getBlocksAt(i, j));
-		}
-	}
-	blst.remove_if(isFixed);
-	for (auto& b : blst) {
+	for (auto& b : blstq4) {
 		ilst.push_back(b->getBlockNum());
 	}
+    //Create dummy cells
 	commonvars::allBlocks.emplace_back(commonvars::allBlocks.size() + 1,  (commonvars::gridSize / 4) * 3,  (commonvars::gridSize / 4) * 3, ilst, false);
 	commonvars::allBlocks.back().setFixed();
-	for (auto & b : blst) {
+    for (auto & b : blstq4) {
 		b->addConnection(&commonvars::allBlocks.back(), virtualWeight);
 	}
+
 	initialPlace(&commonvars::allBlocks);
 
+    if(count < 4){ //[TODO] Need to update criteria
+        simpleSpreadingRecursive(blstq1, count + 1);
+        simpleSpreadingRecursive(blstq2, count + 1);
+        simpleSpreadingRecursive(blstq3, count + 1);
+        simpleSpreadingRecursive(blstq4, count + 1);
+    }
 }
+
+
 
 double wireusage (std::list<Net> * nets){
     double sum = 0;
@@ -833,7 +816,8 @@ void recurseRemoveOverlap(std::list<Block> * blocks, int i) {
 
 //	event_loop(NULL, NULL, NULL, drawscreen);
 
-	if (sum*1.0/commonvars::numFreeBlocks > 0.15)	recurseRemoveOverlap(blocks, i+1); //[TODO] adjust based on criteria
+	//if (sum*1.0/commonvars::numFreeBlocks > 0.15)	recurseRemoveOverlap(blocks, i+1); //[TODO] adjust based on criteria
+    if (n < 8) recurseRemoveOverlap(blocks, i+1);
 }
 
 void drawscreen(){
@@ -895,12 +879,9 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	//if (argc > 3 && std::string(argv[2]) == "-swap") randomSwaps = atoi(argv[3]); //[TODO] change for recursive
-	/*if (argc > 4 && std::string(argv[2]) == "-swap") seed = atoi(argv[4]);
-	else {
-		std::random_device rd;
-		seed = rd();
-	}*/
+    bool try_recursive = false;
+	if (argc >= 3 && std::string(argv[2]) == "-recursive") try_recursive = true;
+
 
 	parseInputFile(argv[1]);
 	for (auto& x : commonvars::allBlocks)
@@ -933,9 +914,9 @@ int main(int argc, char** argv) {
     cout << "Used "<< wireusage(&commonvars::allNets) << " units of wiring. " << endl;
 
 	event_loop(NULL, NULL, NULL, drawscreen);
-
+   
+   if(!try_recursive){
     simpleSpreading();
-	//simpleOverlap();
 
     for (auto& x : commonvars::allBlocks)
 		x.print();
@@ -943,13 +924,25 @@ int main(int argc, char** argv) {
 	cout << "Used " << wireusage(&commonvars::allNets) << " units of wiring. (basic spread)" << endl;
 
 	event_loop(NULL, NULL, NULL, drawscreen);
+    }
+    else{
+	    //recurseRemoveOverlap(&commonvars::allBlocks, 2);
+        std::list<Block *> tempblst;    
+    	std::list<Block *> blst_complete;    
+    
+        //create a list of blocks
+    	for (int x = 0; x <= commonvars::gridSize; x++) { 
+    		for (int y = 0; y <= commonvars::gridSize; y++) { 
+    			tempblst = commonvars::getBlocksAt(x, y);
+    			tempblst.remove_if(isFixed);
+                blst_complete.splice(blst_complete.end(), tempblst);
+            }
+        }
+        simpleSpreadingRecursive(blst_complete, 1);
+	    cout << "Used " << wireusage(&commonvars::allNets) << " units of wiring. (recursive)" << endl;
 
-#if DO_FULL_SPREADING
-	recurseRemoveOverlap(&commonvars::allBlocks, 2);
+	    event_loop(NULL, NULL, NULL, drawscreen);
+    }
 
-	cout << "Used " << wireusage(&commonvars::allNets) << " units of wiring. (full spread)" << endl;
-
-	event_loop(NULL, NULL, NULL, drawscreen);
-#endif
 	return 0;
 }
